@@ -1,0 +1,57 @@
+package com.example.demo.service;
+import com.example.demo.client.*;
+import com.example.demo.dto.*;
+import com.example.demo.entity.*;
+import com.example.demo.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+public class BorrowService {
+
+    @Autowired
+    private BorrowRepository borrowRepository;
+
+    @Autowired
+    private BookClient bookClient;
+
+    @Autowired
+    private UserClient userClient;
+
+    public BorrowRecord borrowBook(Long userId, Long bookId) {
+        // 1. Kiểm tra User có tồn tại không? (Gọi sang User Service)
+        UserDTO user = userClient.getUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        // 2. Kiểm tra Book có tồn tại và còn hàng không? (Gọi sang Book Service)
+        BookDTO book = bookClient.getBookById(bookId);
+        if (book == null || book.getAvailableCopies() <= 0) {
+            throw new RuntimeException("Book not available or not found");
+        }
+
+        // 3. Gọi Book Service để giảm số lượng tồn kho
+        try {
+            bookClient.borrowBook(bookId);
+        } catch (Exception e) {
+            throw new RuntimeException("Hiện không thể mượn sách");
+        }
+
+        // 4. Nếu thành công, lưu lịch sử mượn tại Borrow Service
+        BorrowRecord record = new BorrowRecord();
+        record.setUserId(userId);
+        record.setBookId(bookId);
+        record.setBorrowDate(LocalDate.now());
+        record.setStatus("BORROWED");
+
+        return borrowRepository.save(record);
+    }
+
+    public List<BorrowRecord> getBorrowHistory(Long userId) {
+        return borrowRepository.findByUserId(userId);
+    }
+}

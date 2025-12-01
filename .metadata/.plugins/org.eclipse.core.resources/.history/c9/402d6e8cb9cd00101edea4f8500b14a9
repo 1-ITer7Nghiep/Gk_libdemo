@@ -1,0 +1,23 @@
+package com.example.demo.service;
+
+import com.example.demo.entity.*;
+import com.example.demo.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+    
+    public User createUser(User user) {
+        // Ví dụ: Có thể thêm logic validate email ở đây trước khi lưu
+        return userRepository.save(user);
+    }
+}

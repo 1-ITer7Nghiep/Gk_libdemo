@@ -1,0 +1,6 @@
+INSERT INTO user (id, name, email) VALUES (1, 'Nguyen Van A', 'vana@example.com');
+INSERT INTO user (id, name, email) VALUES (2, 'Tran Thi B', 'tranb@example.com');
+INSERT INTO user (id, name, email) VALUES (3, 'Le Van C', 'levanc@example.com');
+INSERT INTO user (id, name, email) VALUES (4, 'Pham Thi D', 'phamd@example.com');
+INSERT INTO user (id, name, email) VALUES (5, 'Hoang Van E', 'hoange@example.com');
+INSERT INTO user (id, name, email) VALUES (6, 'Vu Thi F', 'vuf@example.com');

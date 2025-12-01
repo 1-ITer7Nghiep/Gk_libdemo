@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản lý Thư viện (SOA Demo)</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; }
+        .sidebar { min-height: 100vh; background: #343a40; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 10px 20px; display: block; }
+        .sidebar a:hover, .sidebar a.active { background: #495057; color: white; }
+        .card-counter { box-shadow: 2px 2px 10px #DADADA; margin: 5px; padding: 20px 10px; background-color: #fff; height: 100px; border-radius: 5px; transition: .3s linear all; }
+        .card-counter:hover { box-shadow: 4px 4px 20px #DADADA; transform: scale(1.02); }
+        .card-counter.primary { background-color: #007bff; color: #FFF; }
+        .card-counter.success { background-color: #28a745; color: #FFF; }
+        .card-counter.info { background-color: #17a2b8; color: #FFF; }
+        .main-content { padding: 20px; }
+        .hidden { display: none; }
+        #loadingSpinner { position: fixed; top: 50%; left: 50%; z-index: 9999; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3><i class="fas fa-book-reader"></i> Đăng nhập Thư viện</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted text-center">Nhập Username bất kỳ để vào hệ thống (Demo)</p>
+                        <div class="mb-3">
+                            <label>Username</label>
+                            <input type="text" id="loginUsername" class="form-control" placeholder="Ví dụ: nguyenvana">
+                        </div>
+                        <button onclick="handleLogin()" class="btn btn-primary w-100">Vào hệ thống</button>
+                        <hr>
+                        <button onclick="showRegisterModal()" class="btn btn-outline-secondary w-100">Đăng ký thành viên mới</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP (Hidden by default) -->
+    <div id="mainApp" class="container-fluid hidden">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="text-center py-4">
+                    <h4>Library SOA</h4>
+                    <small id="currentUserDisplay" class="text-info"></small>
+                </div>
+                <a href="#" onclick="showSection('home')" class="active"><i class="fas fa-home"></i> Trang chủ</a>
+                <a href="#" onclick="showSection('books')"><i class="fas fa-book"></i> Quản lý Sách</a>
+                <a href="#" onclick="showSection('users')"><i class="fas fa-users"></i> Độc giả</a>
+                <a href="#" onclick="showSection('borrows')"><i class="fas fa-exchange-alt"></i> Mượn trả</a>
+                <a href="#" onclick="logout()" class="text-danger mt-5"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+            </div>
+
+            <!-- Content -->
+            <div class="col-md-10 main-content">
+                
+                <!-- SECTION: HOME -->
+                <div id="home-section">
+                    <h2>Tổng quan</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card-counter primary">
+                                <i class="fas fa-book fa-2x"></i>
+                                <span class="count-numbers" id="totalBooks">0</span>
+                                <span class="count-name">Đầu sách</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-counter success">
+                                <i class="fas fa-users fa-2x"></i>
+                                <span class="count-numbers" id="totalUsers">0</span>
+                                <span class="count-name">Độc giả</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-counter info">
+                                <i class="fas fa-hand-holding fa-2x"></i>
+                                <span class="count-numbers" id="totalBorrows">0</span>
+                                <span class="count-name">Lượt mượn (của bạn)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: BOOKS -->
+                <div id="books-section" class="hidden">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h2>Kho sách</h2>
+                        <button class="btn btn-primary" onclick="showAddBookModal()"><i class="fas fa-plus"></i> Thêm sách</button>
+                    </div>
+                    <table class="table table-bordered table-hover bg-white shadow-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tựa đề</th>
+                                <th>Tác giả</th>
+                                <th>ISBN</th>
+                                <th>Số lượng</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="booksTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- SECTION: USERS -->
+                <div id="users-section" class="hidden">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h2>Danh sách Độc giả</h2>
+                        <button class="btn btn-success" onclick="showRegisterModal()"><i class="fas fa-plus"></i> Thêm độc giả</button>
+                    </div>
+                    <table class="table table-bordered table-hover bg-white shadow-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- SECTION: BORROWS -->
+                <div id="borrows-section" class="hidden">
+                    <h2>Mượn sách</h2>
+                    <div class="card mb-4">
+                        <div class="card-body bg-light">
+                            <h5 class="card-title">Tạo phiếu mượn mới</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <select id="borrowUserSelect" class="form-select"></select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="borrowBookSelect" class="form-select"></select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button onclick="createBorrow()" class="btn btn-warning w-100">Xác nhận mượn</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <h4>Lịch sử mượn (Của user đang đăng nhập)</h4>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Mã phiếu</th>
+                                <th>Ngày mượn</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="borrowHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal Add/Edit Book -->
+    <div class="modal fade" id="bookModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thông tin sách</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="bookId">
+                    <div class="mb-2"><label>Tựa đề</label><input type="text" id="bookTitle" class="form-control"></div>
+                    <div class="mb-2"><label>Tác giả</label><input type="text" id="bookAuthor" class="form-control"></div>
+                    <div class="mb-2"><label>ISBN</label><input type="text" id="bookIsbn" class="form-control"></div>
+                    <div class="mb-2"><label>Số lượng</label><input type="number" id="bookQty" class="form-control"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="saveBook()">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add User -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thành viên mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2"><label>Username</label><input type="text" id="regUsername" class="form-control"></div>
+                    <div class="mb-2"><label>Họ tên</label><input type="text" id="regFullname" class="form-control"></div>
+                    <div class="mb-2"><label>Email</label><input type="email" id="regEmail" class="form-control"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="registerUser()">Đăng ký</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner-border text-primary hidden" role="status"></div>
+
+    <!-- Bootstrap JS & Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // QUAN TRỌNG: Vì file này nằm cùng server Gateway, ta có thể dùng đường dẫn tương đối
+        // hoặc dùng chính localhost:8080
+        const GATEWAY_URL = 'http://localhost:8080';
+        let currentUser = null;
+        let bookModal = new bootstrap.Modal(document.getElementById('bookModal'));
+        let userModal = new bootstrap.Modal(document.getElementById('userModal'));
+
+        // --- AUTH ---
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value;
+            if(!username) return alert("Vui lòng nhập username");
+
+            // Check if user exists via User Service (thông qua Gateway)
+            fetch(`${GATEWAY_URL}/users`)
+                .then(res => res.json())
+                .then(users => {
+                    const user = users.find(u => u.username === username);
+                    if (user) {
+                        currentUser = user;
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        document.getElementById('mainApp').classList.remove('hidden');
+                        document.getElementById('currentUserDisplay').innerText = `Xin chào, ${user.fullName}`;
+                        loadDashboard();
+                    } else {
+                        alert("Không tìm thấy user! Vui lòng đăng ký.");
+                    }
+                })
+                .catch(err => alert("Lỗi kết nối Gateway: " + err));
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        function showRegisterModal() {
+            userModal.show();
+        }
+
+        function registerUser() {
+            const data = {
+                username: document.getElementById('regUsername').value,
+                fullName: document.getElementById('regFullname').value,
+                email: document.getElementById('regEmail').value
+            };
+            
+            fetch(`${GATEWAY_URL}/users`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(res => {
+                if(res.ok) {
+                    alert("Đăng ký thành công! Hãy đăng nhập.");
+                    userModal.hide();
+                    loadUsers(); // Refresh list if inside app
+                } else alert("Lỗi đăng ký");
+            });
+        }
+
+        // --- NAVIGATION ---
+        function showSection(sectionId) {
+            // Hide all sections
+            ['home', 'books', 'users', 'borrows'].forEach(id => {
+                document.getElementById(id + '-section').classList.add('hidden');
+            });
+            // Show selected
+            document.getElementById(sectionId + '-section').classList.remove('hidden');
+            
+            // Sidebar active state
+            document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if(sectionId === 'home') loadDashboard();
+            if(sectionId === 'books') loadBooks();
+            if(sectionId === 'users') loadUsers();
+            if(sectionId === 'borrows') loadBorrowPage();
+        }
+
+        // --- DATA LOADING ---
+        function loadDashboard() {
+            Promise.all([
+                fetch(`${GATEWAY_URL}/books`).then(r => r.json()),
+                fetch(`${GATEWAY_URL}/users`).then(r => r.json()),
+                fetch(`${GATEWAY_URL}/borrows/user/${currentUser.id}`).then(r => r.json())
+            ]).then(([books, users, borrows]) => {
+                document.getElementById('totalBooks').innerText = books.length;
+                document.getElementById('totalUsers').innerText = users.length;
+                document.getElementById('totalBorrows').innerText = borrows.length;
+            });
+        }
+
+        // --- BOOKS CRUD ---
+        function loadBooks() {
+            fetch(`${GATEWAY_URL}/books`)
+                .then(res => res.json())
+                .then(books => {
+                    const tbody = document.getElementById('booksTableBody');
+                    tbody.innerHTML = '';
+                    books.forEach(book => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${book.id}</td>
+                                <td>${book.title}</td>
+                                <td>${book.author}</td>
+                                <td>${book.isbn}</td>
+                                <td>${book.availableCopies}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="editBook(${book.id})"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteBook(${book.id})"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+        
+        // Hàm hỗ trợ Edit Book
+        window.editBook = function(id) {
+             fetch(`${GATEWAY_URL}/books/${id}`)
+                .then(res => res.json())
+                .then(book => {
+                    document.getElementById('bookId').value = book.id;
+                    document.getElementById('bookTitle').value = book.title;
+                    document.getElementById('bookAuthor').value = book.author;
+                    document.getElementById('bookIsbn').value = book.isbn;
+                    document.getElementById('bookQty').value = book.availableCopies;
+                    bookModal.show();
+                });
+        }
+
+        function showAddBookModal() {
+            document.getElementById('bookId').value = '';
+            document.getElementById('bookTitle').value = '';
+            document.getElementById('bookAuthor').value = '';
+            document.getElementById('bookIsbn').value = '';
+            document.getElementById('bookQty').value = '';
+            bookModal.show();
+        }
+
+        function saveBook() {
+            const id = document.getElementById('bookId').value;
+            const data = {
+                title: document.getElementById('bookTitle').value,
+                author: document.getElementById('bookAuthor').value,
+                isbn: document.getElementById('bookIsbn').value,
+                availableCopies: parseInt(document.getElementById('bookQty').value)
+            };
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${GATEWAY_URL}/books/${id}` : `${GATEWAY_URL}/books`;
+
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(() => {
+                bookModal.hide();
+                loadBooks();
+            });
+        }
+        
+        // Gắn vào window để gọi từ HTML onclick
+        window.deleteBook = function(id) {
+            if(confirm("Bạn có chắc chắn xóa sách này?")) {
+                fetch(`${GATEWAY_URL}/books/${id}`, { method: 'DELETE' })
+                    .then(() => loadBooks());
+            }
+        }
+
+        // --- USERS CRUD ---
+        function loadUsers() {
+            fetch(`${GATEWAY_URL}/users`)
+                .then(res => res.json())
+                .then(users => {
+                    const tbody = document.getElementById('usersTableBody');
+                    tbody.innerHTML = '';
+                    users.forEach(u => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${u.id}</td>
+                                <td>${u.username}</td>
+                                <td>${u.fullName}</td>
+                                <td>${u.email}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="alert('Chức năng demo: Chưa cho phép xóa user')"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+
+        // --- BORROW ---
+        function loadBorrowPage() {
+            // Load dropdowns
+            Promise.all([
+                fetch(`${GATEWAY_URL}/users`).then(r => r.json()),
+                fetch(`${GATEWAY_URL}/books`).then(r => r.json())
+            ]).then(([users, books]) => {
+                const userSelect = document.getElementById('borrowUserSelect');
+                const bookSelect = document.getElementById('borrowBookSelect');
+                
+                userSelect.innerHTML = '<option value="">-- Chọn Độc giả --</option>';
+                users.forEach(u => userSelect.innerHTML += `<option value="${u.id}">${u.fullName} (${u.username})</option>`);
+                // Auto select current user
+                userSelect.value = currentUser.id;
+
+                bookSelect.innerHTML = '<option value="">-- Chọn Sách --</option>';
+                books.forEach(b => {
+                    if(b.availableCopies > 0)
+                        bookSelect.innerHTML += `<option value="${b.id}">${b.title} (Còn: ${b.availableCopies})</option>`
+                });
+            });
+
+            // Load History
+            fetch(`${GATEWAY_URL}/borrows/user/${currentUser.id}`)
+                .then(res => res.json())
+                .then(records => {
+                    const tbody = document.getElementById('borrowHistoryBody');
+                    tbody.innerHTML = '';
+                    records.forEach(r => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${r.id}</td>
+                                <td>${r.borrowDate}</td>
+                                <td><span class="badge bg-success">${r.status}</span></td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+
+        function createBorrow() {
+            const userId = document.getElementById('borrowUserSelect').value;
+            const bookId = document.getElementById('borrowBookSelect').value;
+
+            if(!userId || !bookId) return alert("Vui lòng chọn đủ thông tin");
+
+            fetch(`${GATEWAY_URL}/borrows`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId: userId, bookId: bookId })
+            })
+            .then(res => {
+                if(res.ok) return res.json();
+                throw new Error("Sách hết hàng hoặc lỗi mạng");
+            })
+            .then(() => {
+                alert("Mượn sách thành công!");
+                loadBorrowPage();
+            })
+            .catch(err => alert(err));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+package com.example.demo;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+
+@Configuration
+public class CorsConfiguration {
+	@Bean
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        // Cho phép mọi nguồn (Domain) gọi vào. Trong thực tế nên giới hạn.
+        corsConfig.setAllowedOrigins(Arrays.asList("*"));
+        // Cho phép mọi phương thức (GET, POST, PUT, DELETE)
+        corsConfig.setMaxAge(3600L);
+        corsConfig.addAllowedMethod("*");
+        corsConfig.addAllowedHeader("*");
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
+    }
+
+}
