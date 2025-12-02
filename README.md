@@ -7,7 +7,7 @@ Dự án Demo áp dụng kiến trúc **Service-Oriented Architecture (SOA)** v�
 ## ⚠️ Lưu ý quan trọng về Kiến trúc (Architecture Note)
 
 **Về Service Discovery (Eureka Server):**
-Trong phiên bản này, chúng tôi đã **loại bỏ Discovery Server (Eureka)** để tối ưu hóa việc triển khai Demo và giảm thiểu tài nguyên tiêu thụ. Thay vào đó, hệ thống sử dụng cơ chế kết nối trực tiếp:
+Trong phiên bản này, chúng em đã **loại bỏ Discovery Server (Eureka)** để tối ưu hóa việc triển khai Demo và giảm thiểu tài nguyên, công việc vì có thành viên không tham gia được. Thay vào đó, hệ thống sử dụng cơ chế kết nối trực tiếp:
 
 1.  **Gateway Service:** Sử dụng **Static Routing** (Định tuyến tĩnh) trong `application.yml` để trỏ trực tiếp đến các service con (`localhost:8081`, `localhost:8082`...).
 2.  **Inter-service Communication:** Các Service giao tiếp với nhau qua **OpenFeign** được cấu hình URL cứng (Hard-coded URL) thay vì lookup qua Service ID.
